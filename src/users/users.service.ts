@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { User } from './interfaces/user.interface';
 import { AppService } from 'src/app.service';
 
@@ -27,6 +27,8 @@ export class UsersService {
     const userIndex = this.users.findIndex(u => u.id === user.id);
     if(userIndex > -1) {
       this.users[userIndex] = user;
+    } else {
+      throw new BadRequestException("Can't find user to update.")
     }
   }
 
@@ -34,6 +36,8 @@ export class UsersService {
     const userIndex = this.users.findIndex(u => u.id === id);
     if(userIndex > -1) {
       this.users.splice(userIndex, 1);
+    } else {
+      throw new BadRequestException("Can't find user to delete.");
     }
   }
 }

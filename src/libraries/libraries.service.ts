@@ -1,12 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
 import { Library } from './interfaces/library.interface';
 import { AppService } from 'src/app.service';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class LibrariesService {
-   private readonly libraries: Library[];
+  private readonly libraries: Library[];
 
-  constructor(private appService: AppService) {
+  constructor(private appService: AppService, private usersService: UsersService) {
     this.libraries = this.appService.database.libraries;
   }
 
@@ -26,15 +27,22 @@ export class LibrariesService {
   update(library: Library) {
     const libraryIndex = this.libraries.findIndex(l => l.id === library.id);
     if(libraryIndex > -1) {
-      this.libraries[libraryIndex] = library;
+      if(this.usersService.findOne(library.userId)) {
+        this.libraries[libraryIndex] = library;
+      } else {
+        throw new BadRequestException("Can't find user with provided userId.");
+      }
+    } else {
+      throw new BadRequestException("Can't find library to update.")
     }
   }
 
   remove(id: number) {
     const libraryIndex = this.libraries.findIndex(l => l.id === id);
-    console.log(libraryIndex);
     if(libraryIndex > -1) {
       this.libraries.splice(libraryIndex, 1);
+    } else {
+      throw new BadRequestException("Can't find library to delete.");
     }
   } 
 }

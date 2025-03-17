@@ -33,8 +33,7 @@ export class LibrariesController {
   }
 
   @Delete()
-  remove(@Query('id') id: number) {
-    console.log(id);
-    this.librariesService.remove(id);
+  remove(@Query('id') id: string) {
+    this.librariesService.remove(Number(id));
   }
 }

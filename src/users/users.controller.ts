@@ -34,7 +34,7 @@ export class UsersController {
   }
 
   @Delete()
-  remove(@Query('id') id: number) {
-    this.usersService.remove(id);
+  remove(@Query('id') id: string) {
+    this.usersService.remove(Number(id));
   }
 }
