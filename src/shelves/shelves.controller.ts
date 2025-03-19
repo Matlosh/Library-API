@@ -3,11 +3,15 @@ import { ShelvesService } from './shelves.service';
 import { Shelf } from './interfaces/shelf.interface';
 import { CreateShelfDto } from "./dto/create-shelf.dto";
 import { UpdateShelfDto } from "./dto/update-shelf.dto";
-import { randomInt } from "crypto";
 
 @Controller('shelves')
 export class ShelvesController {
   constructor(private shelvesService: ShelvesService) {}
+
+  @Post()
+  create(@Body() shelf: CreateShelfDto) {
+    this.shelvesService.create(shelf);
+  }
 
   @Get()
   findAll(): Shelf[] {
@@ -16,24 +20,16 @@ export class ShelvesController {
 
   @Get(':id')
   findOne(@Param('id') id: string): Shelf | null {
-    return this.shelvesService.findOne(Number(id));
+    return this.shelvesService.findOne(+id);
+  } 
+
+  @Put(':id')
+  update(@Param('id') id: string, @Body() shelf: UpdateShelfDto) {
+    this.shelvesService.update(+id, shelf);
   }
 
-  @Post()
-  create(@Body() shelf: CreateShelfDto) {
-    this.shelvesService.create({
-      ...shelf,
-      id: randomInt(1024)
-    });
-  }
-
-  @Put()
-  update(@Body() shelf: UpdateShelfDto) {
-    this.shelvesService.update(shelf);
-  }
-
-  @Delete()
-  remove(@Query('id') id: string) {
-    this.shelvesService.remove(Number(id));
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    this.shelvesService.remove(+id);
   }
 }

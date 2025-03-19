@@ -1,6 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { User } from './interfaces/user.interface';
 import { AppService } from 'src/app.service';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { randomInt } from 'crypto';
 
 @Injectable()
 export class UsersService {
@@ -10,8 +13,11 @@ export class UsersService {
     this.users = this.appService.database.users;
   }
 
-  create(user: User) {
-    this.users.push(user);
+  create(user: CreateUserDto) {
+    this.users.push({
+      ...user,
+      id: randomInt(1024) 
+    });
   }
 
   findAll(): User[] {
@@ -23,10 +29,13 @@ export class UsersService {
     return user ? user : null;
   }
 
-  update(user: User) {
-    const userIndex = this.users.findIndex(u => u.id === user.id);
+  update(id: number, user: UpdateUserDto) {
+    const userIndex = this.users.findIndex(u => u.id === id);
     if(userIndex > -1) {
-      this.users[userIndex] = user;
+      this.users[userIndex] = {
+        ...user,
+        id
+      };
     } else {
       throw new BadRequestException("Can't find user to update.")
     }

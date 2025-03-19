@@ -2,6 +2,9 @@ import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
 import { Library } from './interfaces/library.interface';
 import { AppService } from 'src/app.service';
 import { UsersService } from 'src/users/users.service';
+import { CreateLibraryDto } from './dto/create-library.dto';
+import { UpdateLibraryDto } from './dto/update-library.dto';
+import { randomInt } from 'crypto';
 
 @Injectable()
 export class LibrariesService {
@@ -11,8 +14,11 @@ export class LibrariesService {
     this.libraries = this.appService.database.libraries;
   }
 
-  create(library: Library) {
-    this.libraries.push(library);
+  create(library: CreateLibraryDto) {
+    this.libraries.push({
+      ...library,
+      id: randomInt(1024)
+    });
   }
 
   findAll(): Library[] {
@@ -24,11 +30,14 @@ export class LibrariesService {
     return library ? library : null;
   }
 
-  update(library: Library) {
-    const libraryIndex = this.libraries.findIndex(l => l.id === library.id);
+  update(id: number, library: UpdateLibraryDto) {
+    const libraryIndex = this.libraries.findIndex(l => l.id === id);
     if(libraryIndex > -1) {
       if(this.usersService.findOne(library.userId)) {
-        this.libraries[libraryIndex] = library;
+        this.libraries[libraryIndex] = {
+          ...library,
+          id
+        };
       } else {
         throw new BadRequestException("Can't find user with provided userId.");
       }

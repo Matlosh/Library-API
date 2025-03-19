@@ -1,5 +1,4 @@
-export class CreateShelfDto {
-  libraryId: number;
-  name: string;
-  isDefault: boolean
-}
+import { OmitType } from "@nestjs/mapped-types";
+import { UpdateShelfDto } from "./update-shelf.dto";
+
+export class CreateShelfDto extends OmitType(UpdateShelfDto, ['id'] as const) {}

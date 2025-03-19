@@ -1,4 +1,6 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateSubjectDto } from './create-subject.dto';
+import { Subject } from '../interfaces/subject.interface';
 
-export class UpdateSubjectDto extends PartialType(CreateSubjectDto) {}
+export class UpdateSubjectDto implements Subject {
+  id: number;
+  name: string;
+}

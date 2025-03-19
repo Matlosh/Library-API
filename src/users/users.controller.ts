@@ -10,6 +10,11 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
+  @Post()
+  create(@Body() user: CreateUserDto) {
+    this.usersService.create(user);
+  }
+
   @Get()
   findAll(): User[] {
     return this.usersService.findAll();
@@ -20,21 +25,13 @@ export class UsersController {
     return this.usersService.findOne(Number(id));
   }
 
-  @Post()
-  create(@Body() user: CreateUserDto) {
-    this.usersService.create({
-      ...user,
-      id: randomInt(1024)
-    });
+  @Put(':id')
+  update(@Param('id') id: string, @Body() user: UpdateUserDto) {
+    this.usersService.update(+id, user);
   }
 
-  @Put()
-  update(@Body() user: UpdateUserDto) {
-    this.usersService.update(user);
-  }
-
-  @Delete()
-  remove(@Query('id') id: string) {
-    this.usersService.remove(Number(id));
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    this.usersService.remove(+id);
   }
 }

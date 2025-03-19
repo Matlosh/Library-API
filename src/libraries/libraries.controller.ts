@@ -9,6 +9,11 @@ import { UpdateLibraryDto } from "./dto/update-library.dto";
 export class LibrariesController {
   constructor(private librariesService: LibrariesService) {}
 
+  @Post()
+  create(@Body() library: CreateLibraryDto) {
+    this.librariesService.create(library);
+  }
+
   @Get()
   findAll(): Library[] {
     return this.librariesService.findAll();
@@ -16,24 +21,16 @@ export class LibrariesController {
 
   @Get(':id')
   findOne(@Param('id') id: string): Library | null {
-    return this.librariesService.findOne(Number(id));
+    return this.librariesService.findOne(+id);
   }
 
-  @Post()
-  create(@Body() library: CreateLibraryDto) {
-    this.librariesService.create({
-      ...library,
-      id: randomInt(1024)
-    });
+  @Put(':id')
+  update(@Param('id') id: string, @Body() updateLibraryDto: UpdateLibraryDto) {
+    this.librariesService.update(+id, updateLibraryDto);
   }
 
-  @Put()
-  update(@Body() library: UpdateLibraryDto) {
-    this.librariesService.update(library);
-  }
-
-  @Delete()
-  remove(@Query('id') id: string) {
-    this.librariesService.remove(Number(id));
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    this.librariesService.remove(+id);
   }
 }

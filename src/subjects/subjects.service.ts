@@ -1,26 +1,48 @@
 import { Injectable } from '@nestjs/common';
 import { CreateSubjectDto } from './dto/create-subject.dto';
 import { UpdateSubjectDto } from './dto/update-subject.dto';
+import { AppService } from 'src/app.service';
+import { Subject } from './interfaces/subject.interface';
+import { randomInt } from 'crypto';
 
 @Injectable()
 export class SubjectsService {
-  create(createSubjectDto: CreateSubjectDto) {
-    return 'This action adds a new subject';
+  private readonly subjects: Subject[];
+
+  constructor(private appService: AppService) {
+    this.subjects = appService.database.subjects;
+  }
+
+  create(subject: CreateSubjectDto) {
+    this.subjects.push({
+      ...subject,
+      id: randomInt(1024)
+    });
   }
 
   findAll() {
-    return `This action returns all subjects`;
+    return this.subjects;
   }
 
   findOne(id: number) {
-    return `This action returns a #${id} subject`;
+    const subject = this.subjects.find(s => s.id === id);
+    return subject ? subject : null;
   }
 
-  update(id: number, updateSubjectDto: UpdateSubjectDto) {
-    return `This action updates a #${id} subject`;
+  update(id: number, subject: UpdateSubjectDto) {
+    const subjectIndex = this.subjects.findIndex(s => s.id === id);
+    if(subjectIndex > -1) {
+      this.subjects[subjectIndex] = {
+        ...subject,
+        id
+      };
+    }
   }
 
   remove(id: number) {
-    return `This action removes a #${id} subject`;
+    const subjectIndex = this.subjects.findIndex(s => s.id === id);
+    if(subjectIndex > -1) {
+      this.subjects.splice(subjectIndex, 1);
+    }
   }
 }

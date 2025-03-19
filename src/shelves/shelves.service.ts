@@ -1,6 +1,9 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { Shelf } from "./interfaces/shelf.interface";
 import { AppService } from "src/app.service";
+import { CreateShelfDto } from "./dto/create-shelf.dto";
+import { randomInt } from "crypto";
+import { UpdateShelfDto } from "./dto/update-shelf.dto";
 
 @Injectable()
 export class ShelvesService {
@@ -10,8 +13,11 @@ export class ShelvesService {
     this.shelves = this.appService.database.shelves;
   }
 
-  create(shelf: Shelf) {
-    this.shelves.push(shelf);
+  create(shelf: CreateShelfDto) {
+    this.shelves.push({
+      ...shelf,
+      id: randomInt(1024)
+    });
   }
 
   findAll(): Shelf[] {
@@ -19,21 +25,28 @@ export class ShelvesService {
   }
 
   findOne(id: number): Shelf | null {
-    const shelf = this.shelves.find(l => l.id === id);
+    const shelf = this.shelves.find(s => s.id === id);
     return shelf ? shelf : null;
   }
 
-  update(shelf: Shelf) {
-    const shelfIndex = this.shelves.findIndex(l => l.id === shelf.id);
+  update(id: number, shelf: UpdateShelfDto) {
+    const shelfIndex = this.shelves.findIndex(s => s.id === id);
     if(shelfIndex > -1) {
-      this.shelves[shelfIndex] = shelf;
+      this.shelves[shelfIndex] = {
+        ...shelf,
+        id
+      };
+    } else {
+      throw new BadRequestException("Can't find shelf to update.");
     }
   }
 
   remove(id: number) {
-    const shelfIndex = this.shelves.findIndex(l => l.id === id);
+    const shelfIndex = this.shelves.findIndex(s => s.id === id);
     if(shelfIndex > -1) {
       this.shelves.splice(shelfIndex, 1);
+    } else {
+      throw new BadRequestException("Can't find shelf to delete.");
     }
   } 
 }
