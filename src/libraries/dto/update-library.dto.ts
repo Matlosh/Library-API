@@ -1,8 +1,5 @@
-import { Library } from "../interfaces/library.interface";
+import { CreateLibraryDto } from "./create-library.dto";
 
-export class UpdateLibraryDto implements Library {
+export class UpdateLibraryDto extends CreateLibraryDto {
   id: number;
-  userId: number;
-  name: string;
-  isPublic: boolean;
 }

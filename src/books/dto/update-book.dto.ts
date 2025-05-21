@@ -1,12 +1,5 @@
-import { Book } from "../interfaces/book.interface";
+import { CreateBookDto } from "./create-book.dto";
 
-export class UpdateBookDto implements Book {
+export class UpdateBookDto extends CreateBookDto {
   id: number;
-  title: string;
-  isbn: string;
-  author: string;
-  coverUrl: string;
-  pagesCount: number;
-  subjects: number[];
-  shelves: number[];
 }

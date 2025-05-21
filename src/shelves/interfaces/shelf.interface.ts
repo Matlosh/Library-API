@@ -1,5 +1,5 @@
 export interface Shelf {
-  id: number,
+  id?: number,
   libraryId: number,
   name: string,
   isDefault: boolean

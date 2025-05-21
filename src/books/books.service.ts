@@ -23,7 +23,7 @@ export class BooksService {
     const id = randomInt(1024);
 
     this.books.push({
-      ...rest,
+      ...book,
       id 
     });
 
@@ -46,7 +46,7 @@ export class BooksService {
       const {subjects, shelves, ...rest} = book;
 
       this.books[bookIndex] = {
-        ...rest,
+        ...book,
         id
       };
 

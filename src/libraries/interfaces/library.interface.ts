@@ -1,5 +1,5 @@
 export interface Library {
-  id: number,
+  id?: number,
   userId: number,
   name: string,
   isPublic: boolean

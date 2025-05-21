@@ -1,9 +1,6 @@
 import { User } from "../interfaces/user.interface";
+import { CreateUserDto } from "./create-user.dto";
 
-export class UpdateUserDto implements User {
+export class UpdateUserDto extends CreateUserDto {
   id: number;
-  login: string;
-  email: string;
-  nick: string;
-  password: string;
 }

@@ -1,4 +1,7 @@
 import { OmitType } from "@nestjs/mapped-types";
 import { UpdateSubjectDto } from "./update-subject.dto";
+import { Subject } from "../interfaces/subject.interface";
 
-export class CreateSubjectDto extends OmitType(UpdateSubjectDto, ['id'] as const) {}
+export class CreateSubjectDto implements Subject {
+  name: string;
+}

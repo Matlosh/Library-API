@@ -1,8 +1,6 @@
 import { Shelf } from "../interfaces/shelf.interface"
+import { CreateShelfDto } from "./create-shelf.dto";
 
-export class UpdateShelfDto implements Shelf {
+export class UpdateShelfDto extends CreateShelfDto {
   id: number;
-  libraryId: number;
-  name: string;
-  isDefault: boolean;
 }

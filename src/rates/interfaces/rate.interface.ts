@@ -1,5 +1,5 @@
 export interface Rate {
-  id: number,
+  id?: number,
   userId: number,
   bookId: number,
   score: number,

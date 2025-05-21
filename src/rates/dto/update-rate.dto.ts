@@ -1,9 +1,6 @@
 import { Rate } from '../interfaces/rate.interface';
+import { CreateRateDto } from './create-rate.dto';
 
-export class UpdateRateDto implements Rate {
+export class UpdateRateDto extends CreateRateDto {
   id: number;
-  userId: number;
-  bookId: number;
-  score: number;
-  comment: string;
 }

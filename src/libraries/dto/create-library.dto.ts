@@ -1,4 +1,7 @@
-import { OmitType } from "@nestjs/mapped-types";
-import { UpdateLibraryDto } from "./update-library.dto";
+import { Library } from "../interfaces/library.interface";
 
-export class CreateLibraryDto extends OmitType(UpdateLibraryDto, ['id'] as const) {}
+export class CreateLibraryDto implements Library {
+	userId: number;
+	name: string;
+	isPublic: boolean;
+}

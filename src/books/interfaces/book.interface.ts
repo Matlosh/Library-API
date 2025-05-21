@@ -1,8 +1,10 @@
 export interface Book {
-  id: number,
+  id?: number,
   title: string,
   isbn: string,
   author: string,
   coverUrl: string,
-  pagesCount: number
+  pagesCount: number,
+  subjects: number[],
+  shelves: number[]
 }
