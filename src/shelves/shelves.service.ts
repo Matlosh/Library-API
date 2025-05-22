@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { Shelf } from "./interfaces/shelf.interface";
 import { AppService } from "src/app.service";
 import { CreateShelfDto } from "./dto/create-shelf.dto";
@@ -31,22 +31,22 @@ export class ShelvesService {
 
   update(id: number, shelf: UpdateShelfDto) {
     const shelfIndex = this.shelves.findIndex(s => s.id === id);
-    if(shelfIndex > -1) {
-      this.shelves[shelfIndex] = {
-        ...shelf,
-        id
-      };
-    } else {
-      throw new BadRequestException("Can't find shelf to update.");
+    if(shelfIndex <= -1) {
+      throw new NotFoundException("Can't find shelf to update.");
     }
+
+    this.shelves[shelfIndex] = {
+      ...shelf,
+      id
+    };
   }
 
   remove(id: number) {
     const shelfIndex = this.shelves.findIndex(s => s.id === id);
-    if(shelfIndex > -1) {
-      this.shelves.splice(shelfIndex, 1);
-    } else {
-      throw new BadRequestException("Can't find shelf to delete.");
+    if(shelfIndex <= -1) {
+      throw new NotFoundException("Can't find shelf to delete.");
     }
-  } 
+
+    this.shelves.splice(shelfIndex, 1);
+  }
 }

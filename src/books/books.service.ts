@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { Book } from "./interfaces/book.interface";
 import { AppService } from "src/app.service";
 import { CreateBookDto } from "./dto/create-book.dto";
@@ -42,30 +42,34 @@ export class BooksService {
 
   update(id: number, book: UpdateBookDto) {
     const bookIndex = this.books.findIndex(l => l.id === id);
-    if(bookIndex > -1) {
-      const {subjects, shelves, ...rest} = book;
-
-      this.books[bookIndex] = {
-        ...book,
-        id
-      };
-
-      this.appService.database.booksSubjects =
-        this.appService.database.booksSubjects.filter(entry => entry.bookId !== id);
-        
-      this.appService.database.shelvesBooks =
-        this.appService.database.shelvesBooks.filter(entry => entry.bookId !== id);
-
-      this.createBooksSubjects(id, subjects);
-      this.createShelvesBooks(id, shelves);
+    if(bookIndex <= -1) {
+      throw new NotFoundException("Can't find book to update.");
     }
+
+    const {subjects, shelves, ...rest} = book;
+
+    this.books[bookIndex] = {
+      ...book,
+      id
+    };
+
+    this.appService.database.booksSubjects =
+      this.appService.database.booksSubjects.filter(entry => entry.bookId !== id);
+      
+    this.appService.database.shelvesBooks =
+      this.appService.database.shelvesBooks.filter(entry => entry.bookId !== id);
+
+    this.createBooksSubjects(id, subjects);
+    this.createShelvesBooks(id, shelves);
   }
 
   remove(id: number) {
     const bookIndex = this.books.findIndex(l => l.id === id);
-    if(bookIndex > -1) {
-      this.books.splice(bookIndex, 1);
+    if(bookIndex <= -1) {
+      throw new NotFoundException("Can't find book to delete.");
     }
+
+    this.books.splice(bookIndex, 1);
   }
 
   createBooksSubjects(bookId: number, subjectsIds: number[]) {

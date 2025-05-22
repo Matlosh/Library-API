@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { Library } from './interfaces/library.interface';
 import { AppService } from 'src/app.service';
 import { UsersService } from 'src/users/users.service';
@@ -32,26 +32,26 @@ export class LibrariesService {
 
   update(id: number, library: UpdateLibraryDto) {
     const libraryIndex = this.libraries.findIndex(l => l.id === id);
-    if(libraryIndex > -1) {
-      if(this.usersService.findOne(library.userId)) {
-        this.libraries[libraryIndex] = {
-          ...library,
-          id
-        };
-      } else {
-        throw new BadRequestException("Can't find user with provided userId.");
-      }
-    } else {
-      throw new BadRequestException("Can't find library to update.")
+    if(libraryIndex <= -1) {
+      throw new NotFoundException("Can't find library to update.");
     }
+
+    if(!this.usersService.findOne(library.userId)) {
+      throw new BadRequestException("Passed userId is incorrect.");
+    }
+
+    this.libraries[libraryIndex] = {
+      ...library,
+      id
+    };
   }
 
   remove(id: number) {
     const libraryIndex = this.libraries.findIndex(l => l.id === id);
-    if(libraryIndex > -1) {
-      this.libraries.splice(libraryIndex, 1);
-    } else {
-      throw new BadRequestException("Can't find library to delete.");
+    if(libraryIndex <= -1) {
+      throw new NotFoundException("Can't find library to delete.");
     }
+
+    this.libraries.splice(libraryIndex, 1);
   } 
 }

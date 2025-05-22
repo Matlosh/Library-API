@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateSubjectDto } from './dto/create-subject.dto';
 import { UpdateSubjectDto } from './dto/update-subject.dto';
 import { AppService } from 'src/app.service';
@@ -31,18 +31,22 @@ export class SubjectsService {
 
   update(id: number, subject: UpdateSubjectDto) {
     const subjectIndex = this.subjects.findIndex(s => s.id === id);
-    if(subjectIndex > -1) {
-      this.subjects[subjectIndex] = {
-        ...subject,
-        id
-      };
+    if(subjectIndex <= -1) {
+      throw new NotFoundException("Can't find subject to update.");
     }
+
+    this.subjects[subjectIndex] = {
+      ...subject,
+      id
+    };
   }
 
   remove(id: number) {
     const subjectIndex = this.subjects.findIndex(s => s.id === id);
-    if(subjectIndex > -1) {
-      this.subjects.splice(subjectIndex, 1);
+    if(subjectIndex <= -1) {
+      throw new NotFoundException("Can't find subject to delete.");
     }
+
+    this.subjects.splice(subjectIndex, 1);
   }
 }
