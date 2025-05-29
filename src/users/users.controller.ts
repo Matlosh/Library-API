@@ -5,6 +5,9 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 import { ApiCreatedResponse, ApiNoContentResponse, ApiOkResponse } from "@nestjs/swagger";
 import { User } from "./schemas/user.schema";
 import { UserResponseDto } from "./dto/user-response.dto";
+import { Library } from "src/libraries/schemas/library.schema";
+import { LibraryResponseDto } from "src/libraries/dto/library-response.dto";
+import { UserLibrariesResponseDto } from "./dto/user-libraries-response.dto";
 
 @Controller('users')
 export class UsersController {
@@ -35,6 +38,15 @@ export class UsersController {
   })
   findOne(@Param('id') id: string): Promise<User | null> {
     return this.usersService.findOne(id);
+  }
+
+  @Get(':id/libraries')
+  @ApiOkResponse({
+    type: [UserLibrariesResponseDto],
+    description: 'Retrieve libraries associated with a user by ID'
+  })
+  findLibraries(@Param('id') id: string): Promise<Library[]> {
+    return this.usersService.findLibraries(id);
   }
 
   @Put(':id')

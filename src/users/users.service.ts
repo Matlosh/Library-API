@@ -6,10 +6,14 @@ import { User } from './schemas/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { config } from 'src/config';
 import { ApiOkResponse } from '@nestjs/swagger';
+import { Library } from 'src/libraries/schemas/library.schema';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(Library.name) private libraryModel: Model<Library>
+  ) {}
 
   async create(user: CreateUserDto): Promise<User> {
     // - Where's the password hashing???
@@ -29,6 +33,17 @@ export class UsersService {
   async findOne(id: string): Promise<User | null> {
     return this.userModel
       .findById(id)
+      .exec();
+  }
+
+  async findLibraries(id: string): Promise<Library[]> {
+    const user = await this.userModel.findById(id).exec();
+    if (!user) {
+      throw new NotFoundException("User not found.");
+    }
+
+    return await this.libraryModel
+      .find({ user: id })
       .exec();
   }
 
