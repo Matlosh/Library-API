@@ -1,96 +1,80 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { Book } from "./interfaces/book.interface";
 import { AppService } from "src/app.service";
 import { CreateBookDto } from "./dto/create-book.dto";
 import { randomInt } from "crypto";
 import { UpdateBookDto } from "./dto/update-book.dto";
 import { SubjectsService } from "src/subjects/subjects.service";
 import { ShelvesService } from "src/shelves/shelves.service";
+import { InjectModel } from "@nestjs/mongoose";
+import { Book } from "./schemas/book.schema";
+import mongoose, { Model } from "mongoose";
+import { Subject } from "src/subjects/schemas/subject.schema";
+import { Shelf } from "src/shelves/schemas/shelf.schema";
+import { config } from "src/config";
 
 @Injectable()
 export class BooksService {
-  private readonly books: Book[];
-
   constructor(
-    private appService: AppService,
-    private subjectsService: SubjectsService,
-    private shelvesService: ShelvesService) {
-    this.books = this.appService.database.books;
+    @InjectModel(Book.name) private bookModel: Model<Book>,
+    @InjectModel(Subject.name) private subjectModel: Model<Subject>,
+    @InjectModel(Shelf.name) private shelfModel: Model<Shelf>
+  ) {}
+
+  private async validateSubjectsAndShelves(
+    subjectsIds: mongoose.Schema.Types.ObjectId[],
+    shelvesIds: mongoose.Schema.Types.ObjectId[]
+  ): Promise<void> {
+    const subjects = await this.subjectModel.find({ _id: { $in: subjectsIds } }).exec();
+    if (subjects.length !== subjectsIds.length) {
+      throw new NotFoundException("One or more subjects do not exist.");
+    }
+
+    const shelves = await this.shelfModel.find({ _id: { $in: shelvesIds } }).exec();
+    if (shelves.length !== shelvesIds.length) {
+      throw new NotFoundException("One or more shelves do not exist.");
+    }
   }
 
-  create(book: CreateBookDto) {
-    const {subjects, shelves, ...rest} = book;
-    const id = randomInt(1024);
+  async create(book: CreateBookDto): Promise<Book> {
+    await this.validateSubjectsAndShelves(book.subjectsIds, book.shelvesIds);
 
-    this.books.push({
+    const createdBook = new this.bookModel({
       ...book,
-      id 
+      subjects: book.subjectsIds,
+      shelves: book.shelvesIds
     });
-
-    this.createBooksSubjects(id, subjects); 
-    this.createShelvesBooks(id, shelves);
+    return createdBook.save();
   }
 
-  findAll(): Book[] {
-    return this.books;
+  async findAll(page: number = 0): Promise<Book[]> {
+    return this.bookModel
+      .find()
+      .limit(config.findAllLimit)
+      .skip(page * config.findAllLimit)
+      .exec();
   }
 
-  findOne(id: number): Book | null {
-    const book = this.books.find(l => l.id === id);
-    return book ? book : null;
+  async findOne(id: string): Promise<Book | null> {
+    return this.bookModel
+      .findById(id)
+      .exec();
   }
 
-  update(id: number, book: UpdateBookDto) {
-    const bookIndex = this.books.findIndex(l => l.id === id);
-    if(bookIndex <= -1) {
+  async update(id: string, book: UpdateBookDto): Promise<Book | null> {
+    await this.validateSubjectsAndShelves(book.subjectsIds, book.shelvesIds);
+
+    const response = await this.bookModel.updateOne({ _id: id }, book).exec();
+    if(response.matchedCount === 0) {
       throw new NotFoundException("Can't find book to update.");
     }
 
-    const {subjects, shelves, ...rest} = book;
-
-    this.books[bookIndex] = {
-      ...book,
-      id
-    };
-
-    this.appService.database.booksSubjects =
-      this.appService.database.booksSubjects.filter(entry => entry.bookId !== id);
-      
-    this.appService.database.shelvesBooks =
-      this.appService.database.shelvesBooks.filter(entry => entry.bookId !== id);
-
-    this.createBooksSubjects(id, subjects);
-    this.createShelvesBooks(id, shelves);
+    return await this.findOne(id);
   }
 
-  remove(id: number) {
-    const bookIndex = this.books.findIndex(l => l.id === id);
-    if(bookIndex <= -1) {
+  async delete(id: string) {
+    const response = await this.bookModel.deleteOne({ _id: id }).exec();
+    if(response.deletedCount === 0) {
       throw new NotFoundException("Can't find book to delete.");
-    }
-
-    this.books.splice(bookIndex, 1);
-  }
-
-  createBooksSubjects(bookId: number, subjectsIds: number[]) {
-    for(const subjectId of subjectsIds) {
-      if(this.subjectsService.findOne(subjectId)) {
-        this.appService.database.booksSubjects.push({
-          bookId,
-          subjectId
-        });
-      }
-    }
-  }
-
-  createShelvesBooks(bookId: number, shelvesIds: number[]) {
-    for(const shelfId of shelvesIds) {
-      if(this.shelvesService.findOne(shelfId)) {
-        this.appService.database.shelvesBooks.push({
-          bookId,
-          shelfId
-        });
-      }
     }
   }
 }

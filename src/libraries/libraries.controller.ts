@@ -1,36 +1,36 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put, Query } from "@nestjs/common";
 import { LibrariesService } from "./libraries.service";
-import { Library } from "./interfaces/library.interface";
 import { CreateLibraryDto } from "./dto/create-library.dto";
-import { randomInt } from "crypto";
 import { UpdateLibraryDto } from "./dto/update-library.dto";
+import { Library } from "./schemas/library.schema";
 
 @Controller('/libraries')
 export class LibrariesController {
   constructor(private librariesService: LibrariesService) {}
 
   @Post()
-  create(@Body() library: CreateLibraryDto) {
-    this.librariesService.create(library);
+  async create(@Body() library: CreateLibraryDto): Promise<Library> {
+    return this.librariesService.create(library);
   }
 
   @Get()
-  findAll(): Library[] {
-    return this.librariesService.findAll();
+  async findAll(@Query('page') page?: string): Promise<Library[]> {
+    return this.librariesService.findAll(Number(page));
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): Library | null {
-    return this.librariesService.findOne(+id);
+  async findOne(@Param('id') id: string): Promise<Library | null> {
+    return this.librariesService.findOne(id);
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateLibraryDto: UpdateLibraryDto) {
-    this.librariesService.update(+id, updateLibraryDto);
+  async update(@Param('id') id: string, @Body() updateLibraryDto: UpdateLibraryDto): Promise<Library | null> {
+    return this.librariesService.update(id, updateLibraryDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    this.librariesService.remove(+id);
+  @HttpCode(204)
+  async delete(@Param('id') id: string) {
+    this.librariesService.delete(id);
   }
 }

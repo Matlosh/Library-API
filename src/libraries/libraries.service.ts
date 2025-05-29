@@ -1,57 +1,65 @@
 import { BadRequestException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
-import { Library } from './interfaces/library.interface';
-import { AppService } from 'src/app.service';
-import { UsersService } from 'src/users/users.service';
 import { CreateLibraryDto } from './dto/create-library.dto';
 import { UpdateLibraryDto } from './dto/update-library.dto';
-import { randomInt } from 'crypto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Library } from './schemas/library.schema';
+import mongoose, { Model } from 'mongoose';
+import { User } from 'src/users/schemas/user.schema';
+import { config } from 'src/config';
 
 @Injectable()
 export class LibrariesService {
-  private readonly libraries: Library[];
+  constructor(
+    @InjectModel(Library.name) private libraryModel: Model<Library>,
+    @InjectModel(User.name) private userModel: Model<User>
+  ) {}
 
-  constructor(private appService: AppService, private usersService: UsersService) {
-    this.libraries = this.appService.database.libraries;
+  private async validateUser(userId: mongoose.Schema.Types.ObjectId): Promise<void> {
+    const user = await this.userModel.findOne({ _id: userId }).exec();
+    if (!user) {
+      throw new NotFoundException("User with passed userId doesn't exist.");
+    }
   }
 
-  create(library: CreateLibraryDto) {
-    this.libraries.push({
+  async create(library: CreateLibraryDto): Promise<Library> {
+    await this.validateUser(library.userId);
+
+    const createdLibrary = new this.libraryModel({
       ...library,
-      id: randomInt(1024)
+      user: library.userId
     });
+    return createdLibrary.save();
   }
 
-  findAll(): Library[] {
-    return this.libraries;
+  async findAll(page: number = 0): Promise<Library[]> {
+    return this.libraryModel
+      .find()
+      .limit(config.findAllLimit)
+      .skip(page * config.findAllLimit)
+      .exec();
   }
 
-  findOne(id: number): Library | null {
-    const library = this.libraries.find(l => l.id === id);
-    return library ? library : null;
+  async findOne(id: string): Promise<Library | null> {
+    return this.libraryModel
+      .findById(id)
+      .exec();
   }
 
-  update(id: number, library: UpdateLibraryDto) {
-    const libraryIndex = this.libraries.findIndex(l => l.id === id);
-    if(libraryIndex <= -1) {
+  async update(id: string, library: UpdateLibraryDto): Promise<Library | null> {
+    await this.validateUser(library.userId);
+
+    const response = await this.libraryModel.updateOne({ _id: id }, library).exec();
+    if(response.matchedCount === 0) {
       throw new NotFoundException("Can't find library to update.");
     }
 
-    if(!this.usersService.findOne(library.userId)) {
-      throw new BadRequestException("Passed userId is incorrect.");
-    }
-
-    this.libraries[libraryIndex] = {
-      ...library,
-      id
-    };
+    return await this.findOne(id);
   }
 
-  remove(id: number) {
-    const libraryIndex = this.libraries.findIndex(l => l.id === id);
-    if(libraryIndex <= -1) {
+  async delete(id: string) {
+    const response = await this.libraryModel.deleteOne({ _id: id }).exec();
+    if(response.deletedCount === 0) {
       throw new NotFoundException("Can't find library to delete.");
     }
-
-    this.libraries.splice(libraryIndex, 1);
   } 
 }

@@ -1,69 +1,90 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateRateDto } from './dto/create-rate.dto';
 import { UpdateRateDto } from './dto/update-rate.dto';
-import { Rate } from './interfaces/rate.interface';
-import { AppService } from 'src/app.service';
-import { randomInt } from 'crypto';
-import { UsersService } from 'src/users/users.service';
-import { BooksService } from 'src/books/books.service';
+import { InjectModel } from '@nestjs/mongoose';
+import { Rate } from './schemas/rate.schema';
+import mongoose, { Model } from 'mongoose';
+import { User } from 'src/users/schemas/user.schema';
+import { Book } from 'src/books/schemas/book.schema';
+import { config } from 'src/config';
 
 @Injectable()
 export class RatesService {
-  private readonly rates: Rate[];
+  constructor(
+    @InjectModel(Rate.name) private rateModel: Model<Rate>,
+    @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(Book.name) private bookModel: Model<Book>,
+  ) {}
 
-  constructor(private appService: AppService,
-    private usersService: UsersService, private booksService: BooksService) {
-    this.rates = this.appService.database.rates;
-  }
+  private async validateUserAndBook(
+    userId: mongoose.Schema.Types.ObjectId,
+    bookId: mongoose.Schema.Types.ObjectId
+  ): Promise<void> {
+    const [user, book] = await Promise.all([
+      this.userModel.findById(userId).exec(),
+      this.bookModel.findById(bookId).exec()
+    ]);
 
-  create(rate: CreateRateDto) {
-    if(
-      !this.usersService.findOne(rate.userId) ||
-      !this.booksService.findOne(rate.bookId)
-    ) {
-      throw new BadRequestException("Passed userId or bookId are incorrect.");
+    if(!user) {
+      throw new NotFoundException("User with passed userId doesn't exist.");
     }
 
-    this.rates.push({
+    if(!book) {
+      throw new NotFoundException("Book with passed bookId doesn't exist.");
+    }
+  }
+
+  async create(rate: CreateRateDto) {
+    await this.validateUserAndBook(rate.userId, rate.bookId);
+
+    const createdRate = new this.rateModel({
       ...rate,
-      id: randomInt(1024)
+      user: rate.userId,
+      book: rate.bookId
     });
+    return createdRate.save();
   }
 
-  findAll() {
-    return this.rates;
+  async findAll(page: number = 0): Promise<Rate[]> {
+    return this.rateModel
+      .find()
+      .limit(config.findAllLimit)
+      .skip(page * config.findAllLimit)
+      .exec();
   }
 
-  findOne(id: number) {
-    const rate = this.rates.find(r => r.id === id);
-    return rate ? rate : null;
+  async findOne(id: string): Promise<Rate | null> {
+    return this.rateModel
+      .findOne({ _id: id })
+      .exec();
   }
 
-  update(id: number, rate: UpdateRateDto) {
-    const rateIndex = this.rates.findIndex(r => r.id === id);
-    if(rateIndex <= -1) {
+  async update(id: string, rate: UpdateRateDto): Promise<Rate | null> {
+    await this.validateUserAndBook(rate.userId, rate.bookId);
+
+    if(this.rateModel.find({ _id: id }).exec() === null) {
       throw new NotFoundException("Can't find rate to update.");
     }
 
-    if(
-      !this.usersService.findOne(rate.userId) ||
-      !this.booksService.findOne(rate.bookId)
-    ) {
-      throw new BadRequestException("Passed userId or bookId are incorrect.");
+    const response = await this.rateModel
+      .updateOne({ _id: id }, {
+        ...rate,
+        user: rate.userId,
+        book: rate.bookId
+      })
+      .exec();
+
+    if(response.matchedCount === 0) { 
+      throw new NotFoundException("Can't find rate to update.");
     }
 
-    this.rates[rateIndex] = {
-      ...rate,
-      id
-    };
+    return await this.findOne(id);
   }
 
-  remove(id: number) {
-    const rateIndex = this.rates.findIndex(l => l.id === id);
-    if(rateIndex <= -1) {
+  async delete(id: string) {
+    const response = await this.rateModel.deleteOne({ _id: id }).exec();
+    if(response.deletedCount === 0) {
       throw new NotFoundException("Can't find rate to delete.");
     }
-
-    this.rates.splice(rateIndex, 1);
   }
 }

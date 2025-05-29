@@ -2,51 +2,50 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateSubjectDto } from './dto/create-subject.dto';
 import { UpdateSubjectDto } from './dto/update-subject.dto';
 import { AppService } from 'src/app.service';
-import { Subject } from './interfaces/subject.interface';
 import { randomInt } from 'crypto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Subject } from './schemas/subject.schema';
+import { Model } from 'mongoose';
+import { config } from 'src/config';
 
 @Injectable()
 export class SubjectsService {
-  private readonly subjects: Subject[];
+  constructor(@InjectModel(Subject.name) private subjectModel: Model<Subject>) {}
 
-  constructor(private appService: AppService) {
-    this.subjects = appService.database.subjects;
+  async create(subject: CreateSubjectDto): Promise<Subject> {
+    const createdSubject = new this.subjectModel(subject);
+    return createdSubject.save();
   }
 
-  create(subject: CreateSubjectDto) {
-    this.subjects.push({
-      ...subject,
-      id: randomInt(1024)
-    });
+  async findAll(page: number = 0): Promise<Subject[]> {
+    return this.subjectModel
+      .find()
+      .limit(config.findAllLimit)
+      .skip(page * config.findAllLimit)
+      .exec();
   }
 
-  findAll() {
-    return this.subjects;
+  async findOne(id: string): Promise<Subject | null> {
+    return this.subjectModel  
+      .findById(id)
+      .exec();
   }
 
-  findOne(id: number) {
-    const subject = this.subjects.find(s => s.id === id);
-    return subject ? subject : null;
-  }
+  async update(id: string, subject: UpdateSubjectDto): Promise<Subject | null> {
+    const response = await this.subjectModel.updateOne({ _id: id }, subject).exec();
 
-  update(id: number, subject: UpdateSubjectDto) {
-    const subjectIndex = this.subjects.findIndex(s => s.id === id);
-    if(subjectIndex <= -1) {
+    if(response.matchedCount === 0) {
       throw new NotFoundException("Can't find subject to update.");
     }
 
-    this.subjects[subjectIndex] = {
-      ...subject,
-      id
-    };
+    return await this.findOne(id);
   }
 
-  remove(id: number) {
-    const subjectIndex = this.subjects.findIndex(s => s.id === id);
-    if(subjectIndex <= -1) {
+  async delete(id: string) {
+    const response = await this.subjectModel.deleteOne({ _id: id }).exec();
+
+    if(response.deletedCount === 0) {
       throw new NotFoundException("Can't find subject to delete.");
     }
-
-    this.subjects.splice(subjectIndex, 1);
   }
 }

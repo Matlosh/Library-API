@@ -1,4 +1,6 @@
+import mongoose from "mongoose";
+
 export interface Subject {
-  id?: number,
+  id?: mongoose.Schema.Types.ObjectId,
   name: string
 }

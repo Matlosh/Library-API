@@ -1,52 +1,70 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import { Shelf } from "./interfaces/shelf.interface";
-import { AppService } from "src/app.service";
 import { CreateShelfDto } from "./dto/create-shelf.dto";
-import { randomInt } from "crypto";
 import { UpdateShelfDto } from "./dto/update-shelf.dto";
+import { InjectModel } from "@nestjs/mongoose";
+import { Shelf } from "./schemas/shelf.schema";
+import mongoose, { Model } from "mongoose";
+import { config } from "src/config";
+import { Library } from "src/libraries/schemas/library.schema";
 
 @Injectable()
 export class ShelvesService {
-  private readonly shelves: Shelf[];
+  constructor(
+    @InjectModel(Shelf.name) private shelfModel: Model<Shelf>,
+    @InjectModel(Library.name) private libraryModel: Model<Library>
+  ) {}
 
-  constructor(private appService: AppService) {
-    this.shelves = this.appService.database.shelves;
+  private async validateLibrary(libraryId: mongoose.Schema.Types.ObjectId): Promise<void> {
+    const library = await this.libraryModel.findOne({ _id: libraryId }).exec();
+    if (!library) {
+      throw new NotFoundException("Library with passed libraryId doesn't exist.");
+    }
   }
 
-  create(shelf: CreateShelfDto) {
-    this.shelves.push({
+  async create(shelf: CreateShelfDto): Promise<Shelf> {
+    await this.validateLibrary(shelf.libraryId);
+
+    const createdShelf = new this.shelfModel({
       ...shelf,
-      id: randomInt(1024)
+      library: shelf.libraryId
     });
+    return createdShelf.save();
   }
 
-  findAll(): Shelf[] {
-    return this.shelves;
+  async findAll(page: number = 0): Promise<Shelf[]> {
+    return this.shelfModel
+      .find()
+      .limit(config.findAllLimit)
+      .skip(page * config.findAllLimit)
+      .exec();
   }
 
-  findOne(id: number): Shelf | null {
-    const shelf = this.shelves.find(s => s.id === id);
-    return shelf ? shelf : null;
+  async findOne(id: string): Promise<Shelf | null> {
+    return this.shelfModel
+      .findById(id)
+      .exec();
   }
 
-  update(id: number, shelf: UpdateShelfDto) {
-    const shelfIndex = this.shelves.findIndex(s => s.id === id);
-    if(shelfIndex <= -1) {
+  async update(id: string, shelf: UpdateShelfDto): Promise<Shelf | null> {
+    await this.validateLibrary(shelf.libraryId);
+
+    const response = await this.shelfModel.updateOne({ _id: id }, {
+      ...shelf,
+      library: shelf.libraryId
+    }).exec();
+
+    if(response.matchedCount === 0) {
       throw new NotFoundException("Can't find shelf to update.");
     }
 
-    this.shelves[shelfIndex] = {
-      ...shelf,
-      id
-    };
+    return await this.findOne(id);
   }
 
-  remove(id: number) {
-    const shelfIndex = this.shelves.findIndex(s => s.id === id);
-    if(shelfIndex <= -1) {
+  async delete(id: string) {
+    const response = await this.shelfModel.deleteOne({ _id: id }).exec();
+
+    if(response.deletedCount === 0) {
       throw new NotFoundException("Can't find shelf to delete.");
     }
-
-    this.shelves.splice(shelfIndex, 1);
   }
 }

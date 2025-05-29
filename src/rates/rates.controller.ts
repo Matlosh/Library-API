@@ -1,34 +1,36 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, HttpCode } from '@nestjs/common';
 import { RatesService } from './rates.service';
 import { CreateRateDto } from './dto/create-rate.dto';
 import { UpdateRateDto } from './dto/update-rate.dto';
+import { Rate } from './schemas/rate.schema';
 
 @Controller('rates')
 export class RatesController {
   constructor(private readonly ratesService: RatesService) {}
 
   @Post()
-  create(@Body() rate: CreateRateDto) {
+  async create(@Body() rate: CreateRateDto): Promise<Rate> {
     return this.ratesService.create(rate);
   }
 
   @Get()
-  findAll() {
-    return this.ratesService.findAll();
+  async findAll(@Query('page') page: string): Promise<Rate[]> {
+    return this.ratesService.findAll(Number(page));
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.ratesService.findOne(+id);
+  async findOne(@Param('id') id: string): Promise<Rate | null> {
+    return this.ratesService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() rate: UpdateRateDto) {
-    return this.ratesService.update(+id, rate);
+  async update(@Param('id') id: string, @Body() rate: UpdateRateDto): Promise<Rate | null> {
+    return this.ratesService.update(id, rate);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.ratesService.remove(+id);
+  @HttpCode(204)
+  async remove(@Param('id') id: string) {
+    this.ratesService.delete(id);
   }
 }

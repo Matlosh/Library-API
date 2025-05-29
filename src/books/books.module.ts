@@ -1,12 +1,20 @@
 import { Module } from '@nestjs/common';
 import { BooksController } from './books.controller';
-import { AppService } from 'src/app.service';
 import { BooksService } from './books.service';
-import { SubjectsService } from 'src/subjects/subjects.service';
-import { ShelvesService } from 'src/shelves/shelves.service';
+import { MongooseModule } from '@nestjs/mongoose';
+import { Book, BookSchema } from './schemas/book.schema';
+import { Shelf, ShelfSchema } from 'src/shelves/schemas/shelf.schema';
+import { Subject, SubjectSchema } from 'src/subjects/schemas/subject.schema';
 
 @Module({
+  imports: [
+    MongooseModule.forFeature([
+      { name: Book.name, schema: BookSchema },
+      { name: Subject.name, schema: SubjectSchema },
+      { name: Shelf.name, schema: ShelfSchema }
+    ]),
+  ],
   controllers: [BooksController],
-  providers: [BooksService, AppService, SubjectsService, ShelvesService]
+  providers: [BooksService]
 })
 export class BooksModule {}

@@ -1,5 +1,7 @@
+import mongoose from "mongoose";
+
 export interface User {
-  id?: number,
+  id?: mongoose.Schema.Types.ObjectId,
   login: string,
   email: string,
   nick: string,

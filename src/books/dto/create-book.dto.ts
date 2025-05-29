@@ -1,7 +1,6 @@
-import { OmitType } from "@nestjs/mapped-types";
-import { UpdateBookDto } from "./update-book.dto";
 import { Book } from "../interfaces/book.interface";
 import { IsArray, IsNumber, IsOptional, IsString } from "class-validator";
+import mongoose from "mongoose";
 
 export class CreateBookDto implements Book {
   @IsString()
@@ -24,9 +23,9 @@ export class CreateBookDto implements Book {
 
   @IsOptional()
   @IsArray()
-  subjects: number[];
+  subjectsIds: mongoose.Schema.Types.ObjectId[];
 
   @IsOptional()
   @IsArray()
-  shelves: number[];
+  shelvesIds: mongoose.Schema.Types.ObjectId[];
 }

@@ -1,52 +1,51 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { User } from './interfaces/user.interface';
-import { AppService } from 'src/app.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { randomInt } from 'crypto';
+import { Model } from 'mongoose';
+import { User } from './schemas/user.schema';
+import { InjectModel } from '@nestjs/mongoose';
+import { config } from 'src/config';
 
 @Injectable()
 export class UsersService {
-  private readonly users: User[];
+  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
-  constructor(private appService: AppService) {
-    this.users = this.appService.database.users;
+  async create(user: CreateUserDto): Promise<User> {
+    // - Where's the password hashing???
+    // - There's no need to, no one will get here ^.^ (guess what happens next)
+    const createdUser = new this.userModel(user);
+    return createdUser.save();
   }
 
-  create(user: CreateUserDto) {
-    this.users.push({
-      ...user,
-      id: randomInt(1024) 
-    });
+  async findAll(page: number = 0): Promise<User[]> {
+    return this.userModel
+      .find()
+      .limit(config.findAllLimit)
+      .skip(page * config.findAllLimit)
+      .exec();
   }
 
-  findAll(): User[] {
-    return this.users;
+  async findOne(id: string): Promise<User | null> {
+    return this.userModel
+      .findById(id)
+      .exec();
   }
 
-  findOne(id: number): User | null {
-    const user = this.users.find(u => u.id === id);
-    return user ? user : null;
-  }
+  async update(id: string, user: UpdateUserDto): Promise<User | null> {
+    const response = await this.userModel.updateOne({ _id: id }, user).exec();
 
-  update(id: number, user: UpdateUserDto) {
-    const userIndex = this.users.findIndex(u => u.id === id);
-    if(userIndex <= -1) {
+    if(response.matchedCount === 0) {
       throw new NotFoundException("Can't find user to update.")
     }
 
-    this.users[userIndex] = {
-      ...user,
-      id
-    };
+    return await this.findOne(id);
   }
 
-  remove(id: number) {
-    const userIndex = this.users.findIndex(u => u.id === id);
-    if(userIndex <= -1) {
+  async delete(id: string) {
+    const response = await this.userModel.deleteOne({ _id: id }).exec();
+
+    if(response.deletedCount === 0) {
       throw new NotFoundException("Can't find user to delete.");
     }
-
-    this.users.splice(userIndex, 1);
   }
 }
