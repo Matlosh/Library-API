@@ -7,9 +7,23 @@ import { ShelvesModule } from './shelves/shelves.module';
 import { BooksModule } from './books/books.module';
 import { SubjectsModule } from './subjects/subjects.module';
 import { RatesModule } from './rates/rates.module';
+import { MongooseModule } from '@nestjs/mongoose';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
-  imports: [UsersModule, LibrariesModule, ShelvesModule, BooksModule, SubjectsModule, RatesModule],
+  imports: [UsersModule, LibrariesModule, ShelvesModule, BooksModule,
+    SubjectsModule, RatesModule, ConfigModule.forRoot(),
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => {
+        console.log(configService.get<string>('MONGO_URL'));
+        return {
+          uri: configService.get<string>('MONGO_URL')
+        }
+      },
+      inject: [ConfigService]
+    })
+  ],
   exports: [AppService],
   controllers: [AppController],
   providers: [AppService],
