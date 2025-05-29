@@ -34,7 +34,7 @@ export class RatesService {
     }
   }
 
-  async create(rate: CreateRateDto) {
+  async create(rate: CreateRateDto): Promise<Rate> {
     await this.validateUserAndBook(rate.userId, rate.bookId);
 
     const createdRate = new this.rateModel({
@@ -42,7 +42,19 @@ export class RatesService {
       user: rate.userId,
       book: rate.bookId
     });
-    return createdRate.save();
+    const document = await createdRate.save();
+
+    const responseRate = await this.rateModel
+      .findById(document._id)
+      .populate('user', 'nick')
+      .populate('book', 'title author')
+      .exec();
+
+    if(!responseRate) {
+      throw new NotFoundException("Couldn't find rate after creation.");
+    }
+
+    return responseRate;
   }
 
   async findAll(page: number = 0): Promise<Rate[]> {
@@ -50,12 +62,16 @@ export class RatesService {
       .find()
       .limit(config.findAllLimit)
       .skip(page * config.findAllLimit)
+      .populate('user', 'nick')
+      .populate('book', 'title author')
       .exec();
   }
 
   async findOne(id: string): Promise<Rate | null> {
     return this.rateModel
       .findOne({ _id: id })
+      .populate('user', 'nick')
+      .populate('book', 'title author')
       .exec();
   }
 

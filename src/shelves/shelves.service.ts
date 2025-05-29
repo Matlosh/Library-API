@@ -28,7 +28,18 @@ export class ShelvesService {
       ...shelf,
       library: shelf.libraryId
     });
-    return createdShelf.save();
+    const document = await createdShelf.save();
+
+    const responseShelf = await this.shelfModel
+      .findById(document._id)
+      .populate('library', 'name')
+      .exec();
+
+    if (!responseShelf) {
+      throw new NotFoundException("Couldn't find shelf after creation.");
+    }
+
+    return responseShelf;
   }
 
   async findAll(page: number = 0): Promise<Shelf[]> {
@@ -36,12 +47,14 @@ export class ShelvesService {
       .find()
       .limit(config.findAllLimit)
       .skip(page * config.findAllLimit)
+      .populate('library', 'name')
       .exec();
   }
 
   async findOne(id: string): Promise<Shelf | null> {
     return this.shelfModel
       .findById(id)
+      .populate('library', 'name')
       .exec();
   }
 

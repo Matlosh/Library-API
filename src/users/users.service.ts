@@ -5,6 +5,7 @@ import { Model } from 'mongoose';
 import { User } from './schemas/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { config } from 'src/config';
+import { ApiOkResponse } from '@nestjs/swagger';
 
 @Injectable()
 export class UsersService {

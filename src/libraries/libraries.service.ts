@@ -28,7 +28,18 @@ export class LibrariesService {
       ...library,
       user: library.userId
     });
-    return createdLibrary.save();
+    const document = await createdLibrary.save();
+
+    const responseLibrary = await this.libraryModel
+      .findById(document._id)
+      .populate('user', 'nick')
+      .exec();
+
+    if (!responseLibrary) {
+      throw new NotFoundException("Couldn't find library after creation.");
+    }
+
+    return responseLibrary;
   }
 
   async findAll(page: number = 0): Promise<Library[]> {
@@ -36,12 +47,14 @@ export class LibrariesService {
       .find()
       .limit(config.findAllLimit)
       .skip(page * config.findAllLimit)
+      .populate('user', 'nick')
       .exec();
   }
 
   async findOne(id: string): Promise<Library | null> {
     return this.libraryModel
       .findById(id)
+      .populate('user', 'nick')
       .exec();
   }
 

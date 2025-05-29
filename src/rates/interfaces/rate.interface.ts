@@ -9,5 +9,5 @@ export interface Rate {
   book?: Book;
   bookId?: mongoose.Schema.Types.ObjectId,
   score: number,
-  comment: string
+  comment?: string
 }

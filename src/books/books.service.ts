@@ -43,7 +43,19 @@ export class BooksService {
       subjects: book.subjectsIds,
       shelves: book.shelvesIds
     });
-    return createdBook.save();
+    const document = await createdBook.save();
+
+    const responseBook = await this.bookModel
+      .findById(document._id)
+      .populate('subjects', 'name')
+      .populate('shelves', 'name')
+      .exec();
+
+    if (!responseBook) {
+      throw new NotFoundException("Couldn't find book after creation.");
+    }
+
+    return responseBook;
   }
 
   async findAll(page: number = 0): Promise<Book[]> {
@@ -51,12 +63,16 @@ export class BooksService {
       .find()
       .limit(config.findAllLimit)
       .skip(page * config.findAllLimit)
+      .populate('subjects', 'name')
+      .populate('shelves', 'name')
       .exec();
   }
 
   async findOne(id: string): Promise<Book | null> {
     return this.bookModel
       .findById(id)
+      .populate('subjects', 'name')
+      .populate('shelves', 'name')
       .exec();
   }
 

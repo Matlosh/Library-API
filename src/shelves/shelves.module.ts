@@ -1,11 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ShelvesController } from './shelves.controller';
-import { AppService } from 'src/app.service';
 import { ShelvesService } from './shelves.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Shelf, ShelfSchema } from './schemas/shelf.schema';
-import { LibrariesService } from 'src/libraries/libraries.service';
-import { LibrariesModule } from 'src/libraries/libraries.module';
 import { Library, LibrarySchema } from 'src/libraries/schemas/library.schema';
 
 @Module({

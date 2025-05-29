@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { HydratedDocument } from "mongoose";
 import { User as UserInterface } from "../interfaces/user.interface";
+import { ApiProperty, ApiResponse } from "@nestjs/swagger";
 
 export type UserDocument = HydratedDocument<User>;
 
